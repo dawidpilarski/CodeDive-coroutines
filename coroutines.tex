@@ -1,0 +1,258 @@
+% !TeX Options = -shell-escape
+
+\documentclass[10pt]{beamer}
+
+\usetheme[progressbar=frametitle, block=fill]{metropolis}
+\usepackage{xcolor}
+\usepackage{multirow}
+\usepackage{pgfpages}
+\usepackage{pifont}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{csquotes}
+\usepackage[english]{babel}
+\newcommand{\cmark}{\ding{51}}
+\newcommand{\xmark}{\ding{55}}
+\setbeamertemplate{note page}{\insertnote}
+%\setbeameroption{show notes on second screen=left}
+
+\setbeameroption{hide notes}
+\definecolor{amethyst}{rgb}{0.5, 0.4, 1.0}
+\definecolor{amethystgrey}{rgb}{0.85, 0.85, 1.0}
+\definecolor{amethystdark}{rgb}{0.4, 0.3, 0.9}
+\definecolor{orangedark}{rgb}{0.0, 0.9, 0}
+\definecolor{titlebg}{HTML}{fbf8ff}
+\definecolor{font}{HTML}{23373b}
+\setbeamercolor{frametitle}{fg= font, bg=titlebg}
+\setbeamercolor{progress bar}{ fg = amethyst, bg= amethystgrey }
+\setbeamercolor{alerted text}{fg=amethystdark}
+
+\usepackage{booktabs}
+\usepackage[scale=2]{ccicons}
+
+\usepackage{minted}
+
+\usepackage{pgfplots}
+
+\usepackage{xspace}
+
+\title{Coroutines in the C++}
+\subtitle{Why and How?}
+\date{}
+\author{Dawid Pilarski}
+\institute{dawid.pilarski@panicsoftware.com \\ \href{http://blog.panicsoftware.com}{blog.panicsoftware.com} \\ dawid.pilarski@tomtom.com }
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+\begin{frame}{Agenda}
+
+\end{frame}
+
+\begin{frame}{Questions...}
+
+\vfill
+\centerline{Ask questions any time.}
+\centerline{Don't be afraid to interrupt me :)}
+\vfill
+
+\end{frame}
+
+\begin{frame}{Who am I?}
+			\centering \alert{Dawid Pilarski}
+			\vskip 1em
+	\begin{columns}[onlytextwidth]
+		\begin{column}{0.7\textwidth}
+			\begin{itemize}
+				\item Senior Software Developer in TomTom
+				\item Member of the ISO/JTC1/SC22/WG21
+				\item Member of the PKN KT {\tiny(programming languages)}
+				\item C++ blog writer
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.29\textwidth}
+				\includegraphics[width=\linewidth]{Dawid_Pilarski.jpg}				
+		\end{column}	
+	\end{columns}
+\end{frame}
+
+\section{Why do we need coroutines?}
+
+\begin{frame}{What are the coroutines?}
+\vfill
+
+\begin{description}
+	\item [Subroutine] Is a sequence of program instructions that performs a specific task, packaged as a unit.
+	\item [Function] Is a subroutine
+	\item [Coroutine] Is generalization of the function.
+\end{description}
+
+\vfill
+\end{frame}
+
+\begin{frame}{What are the coroutines?}
+	\alert{\only{Function}<1>\only{Coroutine}<2->} can be:
+	\begin{itemize}
+		\item called
+		\item returned from
+		\item<+-|alert@+> \alert<+>{suspended}
+		\item<+-|alert@+> resumed from
+		\item<+-|alert@+> created
+		\item<+-|alert@+> destroyed
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Coroutine flowchart}
+
+\begin{columns}
+\begin{column}{0.48\linewidth}
+  \centering
+  Function's flow:
+  \vskip 2em
+  \includegraphics[width=0.8\linewidth]{graphics/function-call.png}
+\end{column}
+\begin{column}{0.48\linewidth}
+  \centering
+  Coroutine flow:
+  \vskip 2em
+  \includegraphics[width=0.8\linewidth]{graphics/coroutine-workflow.png}
+\end{column}
+
+\end{columns}
+
+\end{frame}
+
+\begin{frame}{Coroutines use cases}
+
+\end{frame}
+
+\section{Why do we need language support for the coroutines}
+\begin{frame}{C++ coroutines vs library coroutines}
+\begin{columns}[t]
+\begin{column}{0.48\linewidth}
+  \centering Language based
+  \vskip 2em
+  \includegraphics[width=.8\linewidth]{graphics/cppcoro-creation.png}
+\end{column}
+
+\begin{column}{0.48\linewidth}
+\centering
+  Library based
+  \vskip 2em
+  \includegraphics[width=.8\linewidth]{graphics/coroutine-interaction.png}
+\end{column}
+\end{columns}
+
+\end{frame}
+
+\begin{frame}{C++ vs library - summary}
+  \begin{itemize}[<+- |alert@+>]
+  \item Need to allocate the stack for the Fiber/Coroutine
+  \item Can be suspended from the top level functions and below
+  \item Allocation of the memory in advance
+  \item One allocation per whole stack.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{C++ vs library - summary}
+\begin{columns}[t]
+  \begin{column}{0.48\linewidth}
+
+  \centerline{\alert{Boost.Fiber}}
+  \vfill
+  \begin{itemize}
+  \item Need to allocate \alert{the stack} for the Fiber/Coroutine
+  \item Can be suspended from the \only{top level functions and below}<1>\only{\alert{top level functions and below}}<2->
+  \item Allocation of the memory \only{in advance}<1-2>\only{\alert{in advance}}<3->
+  \item \only{One}<1-3>\only{\alert{One}}<4-> allocation per whole stack.
+  \end{itemize}
+  \end{column}
+  \begin{column}{0.48\linewidth}
+
+  \centerline{\alert{built-in coroutines}}
+  \vfill
+  \begin{itemize}[<+->]
+  \item Need to allocate \alert{the frame} for the Coroutine
+  \item Can be suspended only from the \alert{top level function}
+  \item \alert{Minimal} memory allocations 
+  \item \alert{Multiple} allocations
+  \end{itemize}
+  \end{column}
+  
+  \end{columns}
+\end{frame}
+
+\section{How to implement your own coroutine types?}
+
+\begin{frame}{What's the issue?}
+	Creating custom coroutine type is not easy:
+	\begin{itemize}[<+->]
+		\item C++ provides keywords \alert{only}.
+		\item \alert{Developer must implement} what keywords do.
+	\end{itemize}
+
+	\vfill
+
+	\only{This means:}<3->
+	\begin{itemize}[<+->]
+		\item Implementation of promise\_type ({\fontfamily{ptm}\selectfont\texttildelow}6 functions)
+		\item Implementation of the co\_await  keyword ({\fontfamily{ptm}\selectfont\texttildelow}3 functions)
+	\end{itemize}
+
+	\vfill
+
+	\only{You need to remember to implement on average \alert{9 functions}.}<5>
+\end{frame}
+
+\begin{frame}{Coroutine declaration}
+  \vfill
+  \begin{center}
+  \begin{minipage}{0.8\linewidth}
+  \inputminted{c++}{code-examples/intro/declaration.hpp}
+  \end{minipage}
+  \end{center}
+  \vfill
+
+  \pause
+
+  \begin{itemize}[<+->]
+  	\item Whether the function is a coroutine depends on \alert{it's definition}.
+  	\item If function is a coroutine it's \alert{return type must support coroutines}.
+  \end{itemize}
+  
+\end{frame}
+
+\begin{frame}{Promise\_type}
+	Type supports coroutines \alert{if it has promise\_type}.
+	\vfill
+
+	promise\_type can be:
+	\begin{itemize}
+		\item member of the class
+		\item specialization of the coroutine\_traits<returned\_type>
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Keywords}
+
+\end{frame}
+
+\begin{frame}{co\_await}
+
+\end{frame}
+
+\section{Thank you for attention}
+
+\begin{frame}{Recommended further readings}
+
+\end{frame}
+
+\begin{frame}{Questions?}
+\vfill
+\centering Questions?
+\vfill
+\end{frame}
+
+\end{document}
