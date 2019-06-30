@@ -37,10 +37,10 @@
 \usepackage{xspace}
 
 \title{Coroutines in the C++}
-\subtitle{Why and How?}
+\subtitle{Introduction to the C++ coroutines}
 \date{}
 \author{Dawid Pilarski}
-\institute{dawid.pilarski@panicsoftware.com \\ \href{http://blog.panicsoftware.com}{blog.panicsoftware.com} \\ dawid.pilarski@tomtom.com }
+\institute{dawid.pilarski@panicsoftware.com \\ \href{http://blog.panicsoftware.com}{blog.panicsoftware.com} \\ dawid.pilarski@tomtom.com}
 
 \begin{document}
 
@@ -48,7 +48,7 @@
 
 \section{Introduction}
 \begin{frame}{Agenda}
-
+	\tableofcontents
 \end{frame}
 
 \begin{frame}{Questions...}
@@ -97,10 +97,10 @@
 	\begin{itemize}
 		\item called
 		\item returned from
-		\item<+-|alert@+> \alert<+>{suspended}
-		\item<+-|alert@+> resumed from
-		\item<+-|alert@+> created
-		\item<+-|alert@+> destroyed
+		\item<2-|alert@2> \alert<+>{suspended}
+		\item<3-|alert@3> resumed from
+		\item<4-|alert@4> created
+		\item<5-|alert@5> destroyed
 	\end{itemize}
 \end{frame}
 
@@ -125,10 +125,15 @@
 \end{frame}
 
 \begin{frame}{Coroutines use cases}
-
+	\begin{itemize}
+		\item cooperative multitasking
+		\item generators
+		\item easier state-based computations
+		\item prevent active waiting in the programs
+	\end{itemize}
 \end{frame}
 
-\section{Why do we need language support for the coroutines}
+\section{Why do we need language support for the coroutines?}
 \begin{frame}{C++ coroutines vs library coroutines}
 \begin{columns}[t]
 \begin{column}{0.48\linewidth}
@@ -231,22 +236,123 @@
 	promise\_type can be:
 	\begin{itemize}
 		\item member of the class
-		\item specialization of the coroutine\_traits<returned\_type>
+		\item member of the specialization of the coroutine\_traits<returned\_type>
 	\end{itemize}
 \end{frame}
 
-\begin{frame}{Keywords}
+\begin{frame}{Promise\_type}
+	\centerline{Promise\_type controls coroutine's behavior.}
+	\vfill
 
+	\begin{columns}
+		\begin{column}{0.48\linewidth}
+			\begin{footnotesize}
+			\begin{itemize}[<+-|alert@+>]
+				\item \texttt{awaitable initial\_suspend();}
+				\item \texttt{awaitable final\_suspend();}
+				\item \texttt{return\_type get\_return\_object();}
+				\item \texttt{void unhandled\_exception();}
+			\end{itemize}
+			\end{footnotesize}	
+		\end{column}
+		\begin{column}{0.48\linewidth}
+			\begin{footnotesize}
+			\begin{itemize}
+				\item<1- |alert@1> \texttt{suspension at the beginning}
+				\item<2- |alert@2> \texttt{suspension at the end}
+				\item<3- |alert@3> \texttt{how to create \\ return\_type}
+				\item<4- |alert@4> \texttt{handling unhandled exception}
+			\end{itemize}
+			\end{footnotesize}	
+		\end{column}
+	\end{columns}
+\end{frame}
+
+\begin{frame}{Keywords and promise\_type}
+	Promise\_type is also responsible for keyword's actions:
+	\vfill
+
+	\begin{columns}
+		\begin{column}{0.48\linewidth}
+			\begin{footnotesize}
+			\begin{itemize}[<+-|alert@+>]
+				\item \texttt{co\_return V;}
+				\item \texttt{co\_return;}
+				\item \texttt{co\_yield V;}
+			\end{itemize}
+			\end{footnotesize}	
+		\end{column}
+		\begin{column}{0.48\linewidth}
+			\begin{footnotesize}
+			\begin{itemize}[<+-|alert@+>]
+				\item<1- |alert@1> \texttt{void return\_value(V);}
+				\item<2- |alert@2> \texttt{void return\_void();}
+				\item<3- |alert@3> \texttt{awaitable yield\_value();}
+			\end{itemize}
+			\end{footnotesize}	
+		\end{column}
+	\end{columns}
+\end{frame}
+
+\begin{frame}{Implementing generator: the API}
+	\inputminted[firstline=7, lastline=18, fontsize=\footnotesize]{c++}{code-examples/cppcoro/generator.cpp}
+\end{frame}
+
+\begin{frame}{Implementing generator: the promise\_type}
+	\inputminted[firstline=20, lastline=41, fontsize=\scriptsize]{c++}{code-examples/cppcoro/generator.cpp}
+\end{frame}
+
+\begin{frame}{Implementing generator}
+	\inputminted[fontsize=\scriptsize]{c++}{code-examples/cppcoro/generator_impl.cpp}
 \end{frame}
 
 \begin{frame}{co\_await}
-
+	In order to support co\_await expressions, the argument (awaitable) must:
+	\begin{itemize}
+		\item have \texttt{awaiter operator co\_await} defined, or
+		\item have global \texttt{awaiter operator co\_await(T)} support, or
+		\item implement 3 functions:
+		\begin{itemize}
+			\item \texttt{bool await\_ready()}
+			\item \texttt{await\_suspend(coroutine\_handle<T>)} returning
+			\begin{itemize}
+				\item void 
+				\item bool
+				\item another \texttt{coroutine\_handle}
+			\end{itemize}
+			\item \texttt{T await\_resume()}
+		\end{itemize}
+	\end{itemize}
 \end{frame}
 
-\section{Thank you for attention}
+\begin{frame}{co\_await example - single\_consumer\_event}
+	\inputminted[lastline=20, fontsize=\scriptsize]{c++}{code-examples/cppcoro/single_consumer_event.hpp}
+\end{frame}
 
-\begin{frame}{Recommended further readings}
+\begin{frame}{co\_await example - single\_consumer\_event}
+	\inputminted[firstline=22, fontsize=\scriptsize]{c++}{code-examples/cppcoro/single_consumer_event.hpp}
+\end{frame}
 
+\section*{Thank you for attention}
+
+\begin{frame}{Bibliography and further reading}
+\begin{columns}
+\begin{column}{0.48\linewidth}
+	\begin{itemize}
+		\item Lewiss Baker's Assymetric transfer blog
+		\item newest C++ draft
+		\item My blog - blog.panicsoftware.com
+	\end{itemize}
+\end{column}
+\begin{column}{0.48\linewidth}
+	\begin{itemize}
+		\item James McNellis - "Introduction to the C++ Coroutines"
+		\item Gor Nishanov - any video about the coroutines
+		\item Toby Allsopp - "Coroutines: what can't they do?"
+	\end{itemize}
+\end{column}
+
+\end{columns}
 \end{frame}
 
 \begin{frame}{Questions?}
