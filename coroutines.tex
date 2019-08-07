@@ -36,8 +36,8 @@
 
 \usepackage{xspace}
 
-\title{Coroutines in the C++}
-\subtitle{Introduction to the C++ coroutines}
+\title{C++20 Coroutines}
+\subtitle{What's next?}
 \date{}
 \author{Dawid Pilarski}
 \institute{dawid.pilarski@panicsoftware.com \\ \href{http://blog.panicsoftware.com}{blog.panicsoftware.com} \\ dawid.pilarski@tomtom.com}
@@ -54,8 +54,8 @@
 \begin{frame}{Questions...}
 
 \vfill
-\centerline{Ask questions any time.}
-\centerline{Don't be afraid to interrupt me :)}
+\centerline{Time is rather tight.}
+\centerline{Please hold your questions till the end.}
 \vfill
 
 \end{frame}
@@ -78,7 +78,7 @@
 	\end{columns}
 \end{frame}
 
-\section{Why do we need coroutines?}
+\section{Quick refresh about the coroutines.}
 
 \begin{frame}{What are the coroutines?}
 \vfill
@@ -124,74 +124,7 @@
 
 \end{frame}
 
-\begin{frame}{Coroutines use cases}
-	\begin{itemize}
-		\item cooperative multitasking
-		\item generators
-		\item easier state-based computations
-		\item prevent active waiting in the programs
-	\end{itemize}
-\end{frame}
-
-\section{Why do we need language support for the coroutines?}
-\begin{frame}{C++ coroutines vs library coroutines}
-\begin{columns}[t]
-\begin{column}{0.48\linewidth}
-  \centering Language based
-  \vskip 2em
-  \includegraphics[width=.8\linewidth]{graphics/cppcoro-creation.png}
-\end{column}
-
-\begin{column}{0.48\linewidth}
-\centering
-  Library based
-  \vskip 2em
-  \includegraphics[width=.8\linewidth]{graphics/coroutine-interaction.png}
-\end{column}
-\end{columns}
-
-\end{frame}
-
-\begin{frame}{C++ vs library - summary}
-  \begin{itemize}[<+- |alert@+>]
-  \item Need to allocate the stack for the Fiber/Coroutine
-  \item Can be suspended from the top level functions and below
-  \item Allocation of the memory in advance
-  \item One allocation per whole stack.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{C++ vs library - summary}
-\begin{columns}[t]
-  \begin{column}{0.48\linewidth}
-
-  \centerline{\alert{Boost.Fiber}}
-  \vfill
-  \begin{itemize}
-  \item Need to allocate \alert{the stack} for the Fiber/Coroutine
-  \item Can be suspended from the \only{top level functions and below}<1>\only{\alert{top level functions and below}}<2->
-  \item Allocation of the memory \only{in advance}<1-2>\only{\alert{in advance}}<3->
-  \item \only{One}<1-3>\only{\alert{One}}<4-> allocation per whole stack.
-  \end{itemize}
-  \end{column}
-  \begin{column}{0.48\linewidth}
-
-  \centerline{\alert{built-in coroutines}}
-  \vfill
-  \begin{itemize}[<+->]
-  \item Need to allocate \alert{the frame} for the Coroutine
-  \item Can be suspended only from the \alert{top level function}
-  \item \alert{Minimal} memory allocations 
-  \item \alert{Multiple} allocations
-  \end{itemize}
-  \end{column}
-  
-  \end{columns}
-\end{frame}
-
-\section{How to implement your own coroutine types?}
-
-\begin{frame}{What's the issue?}
+\begin{frame}{How to implement custom coroutine types.}
 	Creating custom coroutine type is not easy:
 	\begin{itemize}[<+->]
 		\item C++ provides keywords \alert{only}.
@@ -219,8 +152,6 @@
   \end{minipage}
   \end{center}
   \vfill
-
-  \pause
 
   \begin{itemize}[<+->]
   	\item Whether the function is a coroutine depends on \alert{it's definition}.
@@ -294,18 +225,6 @@
 	\end{columns}
 \end{frame}
 
-\begin{frame}{Implementing generator: the API}
-	\inputminted[firstline=7, lastline=18, fontsize=\footnotesize]{c++}{code-examples/cppcoro/generator.cpp}
-\end{frame}
-
-\begin{frame}{Implementing generator: the promise\_type}
-	\inputminted[firstline=20, lastline=41, fontsize=\scriptsize]{c++}{code-examples/cppcoro/generator.cpp}
-\end{frame}
-
-\begin{frame}{Implementing generator}
-	\inputminted[fontsize=\scriptsize]{c++}{code-examples/cppcoro/generator_impl.cpp}
-\end{frame}
-
 \begin{frame}{co\_await}
 	In order to support co\_await expressions, the argument (awaitable) must:
 	\begin{itemize}
@@ -325,13 +244,7 @@
 	\end{itemize}
 \end{frame}
 
-\begin{frame}{co\_await example - single\_consumer\_event}
-	\inputminted[lastline=20, fontsize=\scriptsize]{c++}{code-examples/cppcoro/single_consumer_event.hpp}
-\end{frame}
-
-\begin{frame}{co\_await example - single\_consumer\_event}
-	\inputminted[firstline=22, fontsize=\scriptsize]{c++}{code-examples/cppcoro/single_consumer_event.hpp}
-\end{frame}
+\section{Missing coroutines parts}
 
 \section*{Thank you for attention}
 
