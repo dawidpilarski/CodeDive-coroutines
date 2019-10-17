@@ -10,6 +10,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{csquotes}
+\usepackage{textpos}
 \usepackage[english]{babel}
 \newcommand{\cmark}{\ding{51}}
 \newcommand{\xmark}{\ding{55}}
@@ -26,6 +27,12 @@
 \setbeamercolor{frametitle}{fg= font, bg=titlebg}
 \setbeamercolor{progress bar}{ fg = amethyst, bg= amethystgrey }
 \setbeamercolor{alerted text}{fg=amethystdark}
+
+\addtobeamertemplate{frametitle}{}{%
+\begin{textblock*}{100mm}(1\textwidth, -1cm)
+\includegraphics[height=0.97cm]{graphics/TT_Logo_bckg.png}
+\end{textblock*}}
+
 
 \usepackage{booktabs}
 \usepackage[scale=2]{ccicons}
@@ -216,9 +223,9 @@
 		\begin{column}{0.48\linewidth}
 			\begin{footnotesize}
 			\begin{itemize}[<+-|alert@+>]
-				\item<1- |alert@1> \texttt{void return\_value(V);}
-				\item<2- |alert@2> \texttt{void return\_void();}
-				\item<3- |alert@3> \texttt{awaitable yield\_value();}
+				\item<1- |alert@1> \texttt{p.return\_value(V);}
+				\item<2- |alert@2> \texttt{p.return\_void();}
+				\item<3- |alert@3> \texttt{co\_await p.yield\_value();}
 			\end{itemize}
 			\end{footnotesize}	
 		\end{column}
@@ -226,14 +233,14 @@
 \end{frame}
 
 \begin{frame}{co\_await}
-	In order to support co\_await expressions, the argument (awaitable) must:
-	\begin{itemize}
+	In order to support \alert{co\_await} expressions, the argument (awaitable) must:
+	\begin{itemize}[<+-|alert@+>]
 		\item have \texttt{awaiter operator co\_await} defined, or
-		\item have global \texttt{awaiter operator co\_await(T)} support, or
+		\item have global \texttt{awaiter operator co\_await(A)} support, or
 		\item implement 3 functions:
 		\begin{itemize}
 			\item \texttt{bool await\_ready()}
-			\item \texttt{await\_suspend(coroutine\_handle<T>)} returning
+			\item \texttt{await\_suspend(coroutine\_handle<P>)} returning
 			\begin{itemize}
 				\item void 
 				\item bool
@@ -246,7 +253,33 @@
 
 \section{Missing coroutines parts}
 
+\begin{frame}{Type erasure}
+	
+
+\end{frame}
+
+\begin{frame}{asynchronous RAII}
+
+\end{frame}
+
+\begin{frame}{RVO on coroutines}
+
+\end{frame}
+
+\begin{frame}{return value [and|or] return void}
+
+\end{frame}
+
 \section*{Thank you for attention}
+
+\begin{frame}{Special thank you! goes to:}
+	\begin{itemize}
+		\item Gor Nishanov
+		\item Lewiss Baker	
+	\end{itemize}
+
+	for making coroutines 
+\end{frame}
 
 \begin{frame}{Bibliography and further reading}
 \begin{columns}
