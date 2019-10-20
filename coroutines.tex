@@ -9,6 +9,8 @@
 \usepackage{pifont}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+\usepackage{tikz}
+\usetikzlibrary{arrows,shapes}
 \usepackage{csquotes}
 \usepackage{textpos}
 \usepackage[english]{babel}
@@ -262,7 +264,146 @@
 
 \end{frame}
 
-\begin{frame}{RVO on coroutines}
+
+\section{RVO or the co\_await}
+
+\begin{frame}{What is RVO?}
+\centerline{\alert{RVO} - Return Value Optimization.}
+
+\vfill
+
+Allows to avoid unnecessary copy or move construction of the values returned from the function. \\
+For example:
+
+\pause
+
+\inputminted[frame=single]{c++}{code-examples/RVO_examples/example.cpp}
+
+
+
+\end{frame}
+
+\begin{frame}[fragile]{RVO on regular functions}
+
+\begin{columns}[T]
+\begin{column}{0.4\linewidth}
+\centerline{regular function}
+\vfill
+\inputminted{c++}{code-examples/RVO_examples/regular_function_rvo.cpp}
+\vfill
+\end{column}
+\begin{column}{0.55\linewidth}
+\centerline{transformed by compiler into:}
+\vfill
+\inputminted{c++}{code-examples/RVO_examples/transformed_function_rvo.cpp}
+\vfill
+\end{column}
+\end{columns}
+
+\end{frame}
+
+\begin{frame}{Why RVO is not possible with co\_await}
+\begin{columns}[T]
+\begin{column}{0.3\linewidth}
+\centerline{expression}
+\vfill
+\inputminted{c++}{code-examples/RVO_examples/co_await.cpp}
+\vfill
+
+\begin{enumerate}
+	\item<2-> On \alert{await\_suspend} coroutine gets executed
+	\item<3-> On \alert{await\_ready} result is returned
+	\item<4-> Result needs to be preserved since \alert{await\_suspend} till \alert{await\_ready}
+\end{enumerate}
+
+\end{column}
+\begin{column}{0.55\linewidth}
+\centerline{transformed by compiler into:}
+\vfill
+\begin{onlyenv}<2->
+\inputminted[highlightlines={5,8}]{c++}{code-examples/RVO_examples/transformed_co_await.cpp}
+\tikz[baseline,remember picture]{\node[anchor=base] at (6, 1.3) (t1){};
+\tikz[remember picture] \node[coordinate] at (6,2.5) (n1) {};
+}
+\begin{tikzpicture}[remember picture,overlay] 
+        \path[->]<1-> (n1) edge [draw=magenta, thick, bend left] (t1);
+\end{tikzpicture}
+\end{onlyenv}
+\only{\inputminted{c++}{code-examples/RVO_examples/transformed_co_await.cpp}}<1>
+\vfill
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{How to resolve the issue [P1663R0]}
+
+\begin{columns}[T]
+\begin{column}{0.3\linewidth}
+
+\begin{enumerate}[<+-| alert@+>]
+	\item Remove \alert{await\_resume} function.
+	\item \alert{await\_suspend} will will create return result
+	\item Remove \alert{await\_ready} function.
+\end{enumerate}
+\end{column}
+
+\begin{column}{0.6\linewidth}
+\begin{onlyenv}<1-2>
+\inputminted{c++}{code-examples/RVO_examples/transformed_co_await.cpp}
+\begin{tikzpicture}[remember picture, overlay]
+\draw[draw=red] (0.25,1.20) -- (4.5,1.20);
+\end{tikzpicture}
+\end{onlyenv}
+
+\begin{onlyenv}<2>
+\begin{tikzpicture}[remember picture, overlay]
+\draw [draw=blue!20, fill=blue!90, opacity=0.1] (0.7, 3.0) rectangle (5.2, 3.35);
+\end{tikzpicture}
+\end{onlyenv}
+
+\begin{onlyenv}<3>
+\inputminted{c++}{code-examples/RVO_examples/transformed_co_await_no_ready.cpp}
+
+\begin{tikzpicture}[remember picture, overlay]
+\draw[draw=red] (0.25,3.15) -- (5.5,3.15);
+\draw[draw=red] (0.25,1.75) -- (5.5,1.75);
+\draw [draw=blue!20, fill=blue!90, opacity=0.1] (0.7, 2.05) rectangle (5.2, 2.40);
+\end{tikzpicture}
+\end{onlyenv}
+
+\begin{onlyenv}<4>
+\inputminted{c++}{code-examples/RVO_examples/transformed_co_await_simplified.cpp}
+\end{onlyenv}
+\end{column}
+
+\end{columns}
+
+\end{frame}
+
+\begin{frame}{Extensions to the coroutine\_handle}
+	Two additional functions in the coroutine\_handle are needed.
+
+	\begin{itemize}[<+-| alert@+>]
+		\item set\_value
+		\item set\_exception
+	\end{itemize}
+
+	On coroutine resumption the compiler will generate code to check whether the exception was saved with \alert{set\_exception} and will rethrow it when needed.
+
+
+\end{frame}
+
+\begin{frame}{Example of the await\_suspend}
+
+\end{frame}
+
+\begin{frame}{How do compiler know the result of the co\_await?}
+	With removal of the \alert{await\_ready} the compiler no longer knows about the co\_await returned type.
+	\vfill
+
+	We will need to guide the compiler. The proposal 
+	P1663R0 proposes to add member \alert{await\_result\_type} to the Awaiter.
+	\vfill
 
 \end{frame}
 
