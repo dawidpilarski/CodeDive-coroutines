@@ -273,9 +273,9 @@
 \vfill
 
 Allows to avoid unnecessary copy or move construction of the values returned from the function. \\
+\pause
 For example:
 
-\pause
 
 \inputminted[frame=single]{c++}{code-examples/RVO_examples/example.cpp}
 
@@ -312,8 +312,7 @@ For example:
 
 \begin{enumerate}
 	\item<2-> On \alert{await\_suspend} coroutine gets executed
-	\item<3-> On \alert{await\_ready} result is returned
-	\item<4-> Result needs to be preserved since \alert{await\_suspend} till \alert{await\_ready}
+	\item<3-> On \alert{await\_resume} result is returned
 \end{enumerate}
 
 \end{column}
@@ -384,16 +383,40 @@ For example:
 	Two additional functions in the coroutine\_handle are needed.
 
 	\begin{itemize}[<+-| alert@+>]
-		\item set\_value
-		\item set\_exception
+		\item set\_value(T)
+		\item set\_value\_from(Arg...)
+		\item set\_exception(exception\_ptr)
 	\end{itemize}
-
-	On coroutine resumption the compiler will generate code to check whether the exception was saved with \alert{set\_exception} and will rethrow it when needed.
+	
+	\onslide<+->{On coroutine resumption the compiler will generate code to check whether the exception was saved with \alert{set\_exception} and will rethrow it when needed.}
 
 
 \end{frame}
 
-\begin{frame}{Example of the await\_suspend}
+\begin{frame}{Example of the yield\_value}
+\only{
+\inputminted[highlightlines={1}]{c++}{code-examples/RVO_examples/yield_value.cpp}
+}<1>
+
+\only{
+\inputminted[highlightlines={4-7}]{c++}{code-examples/RVO_examples/yield_value.cpp}
+}<2>
+
+\only{
+\inputminted[highlightlines={6}]{c++}{code-examples/RVO_examples/yield_value.cpp}
+}<3>
+
+\only{
+\inputminted[highlightlines={9-14}]{c++}{code-examples/RVO_examples/yield_value.cpp}
+}<4>
+
+\only{
+\inputminted[highlightlines={11-12}]{c++}{code-examples/RVO_examples/yield_value.cpp}
+}<5>
+
+\only{
+\inputminted[highlightlines={13}]{c++}{code-examples/RVO_examples/yield_value.cpp}
+}<6>
 
 \end{frame}
 
@@ -407,11 +430,41 @@ For example:
 
 \end{frame}
 
+\begin{frame}{RVO summary}
+\begin{columns}[T]
+
+\begin{column}{0.48\linewidth}
+\centerline{pros}
+\begin{itemize}[<+-| alert@+>]
+	\item very simplified awaiter concept
+	\item savings in CPU cycles
+	\begin{itemize}
+		\item Avoiding unnecessary move construction
+	\end{itemize}
+	\item savings in memory
+	\begin{itemize}
+		\item no temporary variable created
+		\item allocated coroutine state is smaller
+	\end{itemize}
+\end{itemize}
+\end{column}
+\begin{column}{0.48\linewidth}
+\centerline{cons}
+\begin{itemize}[<+-| alert@+>]
+	\item removing \alert{await\_ready} makes \alert{co\_await} always suspend the coroutine (even if not needed)
+	\item a need to support RVO manually (with the help of \alert{construct\_in\_place})
+	\item proposed RVO does not consider synchronous coroutines - only \alert{co\_await} keyword.
+\end{itemize}
+\end{column}
+\end{columns}
+
+\end{frame}
+
 \begin{frame}{return value [and|or] return void}
 
 \end{frame}
 
-\section*{Thank you for attention}
+\section*{Thank you for your attention!}
 
 \begin{frame}{Special thank you! goes to:}
 	\begin{itemize}

@@ -5,5 +5,5 @@
     awaiter.await_suspend();
   }
   <coroutine resume>;
-  awaiter.await_ready();
+  awaiter.await_resume();
 }
