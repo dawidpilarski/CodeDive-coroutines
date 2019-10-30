@@ -11,6 +11,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{tikz}
 \usetikzlibrary{arrows,shapes}
+\usetikzlibrary{decorations.text}
 \usepackage{csquotes}
 \usepackage{textpos}
 \usepackage[english]{babel}
@@ -35,6 +36,8 @@
 \includegraphics[height=0.97cm]{graphics/TT_Logo_bckg.png}
 \end{textblock*}}
 
+
+\def \coroCpp {coroLexer.py -x}
 
 \usepackage{booktabs}
 \usepackage[scale=2]{ccicons}
@@ -262,10 +265,88 @@
 
 \begin{frame}{asynchronous RAII}
 
+\centerline{\alert{RAII} - Resource Acquisition Is Initialization.}
+
+what does it mean in practice?
+
+Release the resources in the destructor.
+
+\end{frame}
+
+\begin{frame}[fragile]{RAII vs. coroutines}
+\centerline{How do coroutines differ?}
+
+
+\vfill
+\only{\inputminted[highlightlines={1,2,9}]{\coroCpp}{code-examples/async-raii/lack_of_raii.cpp}}<2>
+\only{\inputminted[highlightlines={4}]{\coroCpp}{code-examples/async-raii/lack_of_raii.cpp}}<3>
+\only{\inputminted[highlightlines={5}]{\coroCpp}{code-examples/async-raii/lack_of_raii.cpp}}<4>
+\only{\inputminted[highlightlines={6}]{\coroCpp}{code-examples/async-raii/lack_of_raii.cpp}}<5>
+\only{\inputminted[highlightlines={8}]{\coroCpp}{code-examples/async-raii/lack_of_raii.cpp}}<6>
+\only{\inputminted[highlightlines={4,6}]{\coroCpp}{code-examples/async-raii/lack_of_raii.cpp}}<7->
+\vfill
+
+\only{\centerline{\alert{No RAII to close the file!}}}<7->
+\only{\small Possible leak when async\_read throws}<8>
+\only{\small \\Add solution}<8>
+
+
+\end{frame}
+
+\begin{frame}{It's not only about proper error handling}
+
+\centerline{Consider following scenario:}
+
+\only{\inputminted[highlightlines=1]{\coroCpp}{code-examples/async-raii/generator.cpp}}<1>
+\only{\inputminted[highlightlines={2,3}]{\coroCpp}{code-examples/async-raii/generator.cpp}}<2>
+\only{\inputminted[highlightlines={4}]{\coroCpp}{code-examples/async-raii/generator.cpp}}<3>
+\only{\inputminted[highlightlines={5}]{\coroCpp}{code-examples/async-raii/generator.cpp}}<4>
+\only{\inputminted[highlightlines={2,6}]{\coroCpp}{code-examples/async-raii/generator.cpp}}<5->
+
+\end{frame}
+
+\begin{frame}{generator example usage}
+
+
+\inputminted{\coroCpp}{code-examples/async-raii/generator_usage.cpp}
+
+\pause
+
+\vfill
+
+issues:
+\begin{itemize}[<+-| alert@+>]
+	\item at the \texttt{break;} we are destroying coroutine
+	\item not all lines might be consumed
+	\item proper cleanup needs to be performed anyway on \texttt{coroutine\_handle::destroy()}
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{No issue for the given synchronous coroutine}
+
+\inputminted{\coroCpp}{code-examples/async-raii/generator.cpp}
+
+\pause
+
+\begin{tikzpicture}[remember picture, overlay]
+\node[color=violet] at (5.5,0.5) (destructor) {{\raise.17ex\hbox{$\scriptstyle\mathtt{\sim}$}}ifstream()};
+\draw[color=violet, thick, <-] (3.65, 1.0) to[out=-90, in=180] (destructor);
+\pause
+\draw[color=magenta, thick, ->] (6,2.75) to[out=-45, in=0] node[right](){on loop finished} (4.5, 1.35);
+\pause
+\draw[color=blue, thick, ->] (3, 2.15) to[out=-135, in=135] node[right, yshift=1mm](){on destroy} (3.1, 1.5);
+
+\end{tikzpicture}
+
+\end{frame}
+
+\begin{frame}{asynchronous generators}
+
 \end{frame}
 
 
-\section{RVO or the co\_await}
+\section{RVO for the co\_await}
 
 \begin{frame}{What is RVO?}
 \centerline{\alert{RVO} - Return Value Optimization.}
