@@ -11,5 +11,7 @@ class CustomLexer(CppLexer):
 		for index, token, value in CppLexer.get_tokens_unprocessed(self, text):
 			if value in self.coro_keywords:
 				yield index, Keyword, value
+			elif token is Name.Function:
+				yield index, Name, value
 			else:
 				yield index, token, value

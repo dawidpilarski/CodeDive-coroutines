@@ -301,7 +301,7 @@ Release the resources in the destructor.
 \only{\inputminted[highlightlines={2,3}]{\coroCpp}{code-examples/async-raii/generator.cpp}}<2>
 \only{\inputminted[highlightlines={4}]{\coroCpp}{code-examples/async-raii/generator.cpp}}<3>
 \only{\inputminted[highlightlines={5}]{\coroCpp}{code-examples/async-raii/generator.cpp}}<4>
-\only{\inputminted[highlightlines={2,6}]{\coroCpp}{code-examples/async-raii/generator.cpp}}<5->
+\only{\inputminted[highlightlines={2,7}]{\coroCpp}{code-examples/async-raii/generator.cpp}}<5->
 
 \end{frame}
 
@@ -342,6 +342,21 @@ issues:
 \end{frame}
 
 \begin{frame}{asynchronous generators}
+
+\inputminted{\coroCpp}{code-examples/async-raii/async_generator.cpp}
+
+\begin{tikzpicture}[remember picture, overlay]
+\node[color=violet] at (4,0.5) (cleanup){cleanup};
+\draw[color=violet, thick, <-] (3, 0.9) to[out=-90, in=180] (cleanup);
+\pause
+% \draw[color=magenta, thick, ->]   (6.5, 3.25) to[out=105 in=105] (9.5, 2.7) to[out=-75, in=0] node[below right](){on loop finished} (7, 1.35);
+\draw[color=magenta] node at(10, 1.65) (){on loop finished} ;
+\draw[color=magenta, thick, ->] plot [smooth, tension=2] coordinates { (6.5, 3.25) (9.7, 2.7) (7, 1.35) };
+\pause
+\node[color=blue] at (4.5, 2.2)(nocleanup){on destroy - \color{red}\textit{no cleanup}};
+\draw[color=blue, thick, ->] (1.5, 2.5) to[bend right=20] (nocleanup.west);
+
+\end{tikzpicture}
 
 \end{frame}
 
