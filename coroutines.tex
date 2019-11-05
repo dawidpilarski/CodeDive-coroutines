@@ -12,6 +12,7 @@
 \usepackage{tikz}
 \usetikzlibrary{arrows,shapes}
 \usetikzlibrary{decorations.text}
+\usetikzlibrary{decorations.pathreplacing}
 \usepackage{csquotes}
 \usepackage{textpos}
 \usepackage[english]{babel}
@@ -38,6 +39,8 @@
 
 
 \def \coroCpp {coroLexer.py -x}
+\def \codeTilda {\raise.17ex\hbox{$\scriptstyle\mathtt{\sim}$}}
+
 
 \usepackage{booktabs}
 \usepackage[scale=2]{ccicons}
@@ -317,7 +320,7 @@ Release the resources in the destructor.
 issues:
 \begin{itemize}[<+-| alert@+>]
 	\item at the \texttt{break;} we are destroying coroutine
-	\item not all lines might be consumed
+	\item not all lines from file might be consumed
 	\item proper cleanup needs to be performed anyway on \texttt{coroutine\_handle::destroy()}
 \end{itemize}
 
@@ -330,7 +333,7 @@ issues:
 \pause
 
 \begin{tikzpicture}[remember picture, overlay]
-\node[color=violet] at (5.5,0.5) (destructor) {{\raise.17ex\hbox{$\scriptstyle\mathtt{\sim}$}}ifstream()};
+\node[color=violet] at (5.5,0.5) (destructor) { \codeTilda ifstream()};
 \draw[color=violet, thick, <-] (3.65, 1.0) to[out=-90, in=180] (destructor);
 \pause
 \draw[color=magenta, thick, ->] (6,2.75) to[out=-45, in=0] node[right](){on loop finished} (4.5, 1.35);
@@ -353,13 +356,48 @@ issues:
 \draw[color=magenta] node at(10, 1.65) (){on loop finished} ;
 \draw[color=magenta, thick, ->] plot [smooth, tension=2] coordinates { (6.5, 3.25) (9.7, 2.7) (7, 1.35) };
 \pause
-\node[color=blue] at (4.5, 2.2)(nocleanup){on destroy - \color{red}\textit{no cleanup}};
+\node[color=blue] at (4.5, 2.2)(nocleanup){on early destroy - \color{red}\textit{no cleanup}};
 \draw[color=blue, thick, ->] (1.5, 2.5) to[bend right=20] (nocleanup.west);
 
 \end{tikzpicture}
 
 \end{frame}
 
+\begin{frame}{Current solution to the problem}
+\only{\inputminted[highlightlines={4,5,7-9,12}]{\coroCpp}{code-examples/async-raii/manual_noraii.cpp}}<1>
+\only{\inputminted[highlightlines={5}]{\coroCpp}{code-examples/async-raii/manual_noraii.cpp}}<2>
+\only{\inputminted[highlightlines={7-9}]{\coroCpp}{code-examples/async-raii/manual_noraii.cpp}}<3>
+\only{\inputminted[highlightlines={4}]{\coroCpp}{code-examples/async-raii/manual_noraii.cpp}}<4>
+\only{\inputminted[highlightlines={12}]{\coroCpp}{code-examples/async-raii/manual_noraii.cpp}}<5>
+\end{frame}
+
+\begin{frame}{Proposed coroutines improvement}
+\begin{itemize}
+	\item make co\_await create it's own scope.
+	\item create special function in the awaiter : \alert{\texttt{\codeTilda operator co\_await}}
+	\item \alert{\texttt{\codeTilda operator co\_await}} gets co-awaited at the end of the scope
+	\item instead of \texttt{\alert{destroy()}} you will invoke \texttt{\alert{set\_done()}}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Example}
+\only{\inputminted[highlightlines={2,4}]{\coroCpp}{code-examples/async-raii/better-async-gen.cpp}}<1>
+\only{\inputminted[highlightlines={7}]{\coroCpp}{code-examples/async-raii/better-async-gen.cpp}}<2>
+\end{frame}
+
+\begin{frame}{Summary}
+
+\begin{itemize}[<+-|alert@+>]
+	\item Currently it's difficult to correctly implement asynchronous generators
+	\begin{itemize}
+		\item coroutine bodies
+		\item coroutine type, because we cannot simply destroy the coroutine
+	\end{itemize}
+	\item In the space of asynchronous operations we have got no RAII idiom
+	\item With adoption of the proposal it will get better
+\end{itemize}
+
+\end{frame}
 
 \section{RVO for the co\_await}
 
@@ -372,10 +410,7 @@ Allows to avoid unnecessary copy or move construction of the values returned fro
 \pause
 For example:
 
-
 \inputminted[frame=single]{c++}{code-examples/RVO_examples/example.cpp}
-
-
 
 \end{frame}
 
@@ -556,7 +591,165 @@ For example:
 
 \end{frame}
 
+\section{return\_value or/and return\_void}
+
 \begin{frame}{return value [and|or] return void}
+
+\vfill
+
+right now it's not possible to implement both in the same scope.
+
+\begin{itemize}
+	\item \texttt{return\_value()}
+	\item \texttt{return\_void()}
+\end{itemize}
+
+\pause
+
+\centerline{\alert{Why would we even need that?}}
+
+\end{frame}
+
+\begin{frame}{Motivating example: implementation simplifications}
+
+\inputminted{\coroCpp}{code-examples/retval-retvoid/usage_example.cpp}
+
+\pause
+\begin{tikzpicture}[remember picture, overlay]
+\draw[color=magenta, thick, <-] (2.8,3.85) -- node[right, xshift=4mm](){return\_value(42);}(3.7,3.85);
+\pause
+\draw[color=blue, thick, <-] (3.2, 1.2) to[out=-90, in=180] node[right, xshift=6mm, yshift=-1.5mm](){return\_void()}(4.2, 0.5);
+\end{tikzpicture}
+
+\end{frame}
+
+\begin{frame}{How implementors would like to implement it}
+
+\only{\inputminted{\coroCpp}{code-examples/retval-retvoid/perfect_world_implementation.cpp}}<1>
+
+\only{\inputminted[highlightlines={5,9}]{\coroCpp}{code-examples/retval-retvoid/perfect_world_implementation.cpp}}<2->
+
+\uncover<3>{\centerline{\alert{But that's not the way it works.}}}
+
+\end{frame}
+
+\begin{frame}{How implementors have to implement it?}
+
+\inputminted{\coroCpp}{code-examples/retval-retvoid/read-world-implementation.cpp}
+\pause \hrule
+\inputminted{\coroCpp}{code-examples/retval-retvoid/real-world-implementation-2.cpp}
+
+\end{frame}
+
+\begin{frame}{Tail recursive coroutines}
+
+\centerline{\alert{What's the tail recursive coroutines?}}
+
+\vfill
+
+\begin{columns}[T]
+\begin{column}{0.48\linewidth}
+\inputminted{\coroCpp}{code-examples/retval-retvoid/non_tail_call.cpp}
+\end{column}
+\pause
+\begin{column}{0.48\linewidth}
+\inputminted{\coroCpp}{code-examples/retval-retvoid/tail_call.cpp}
+\end{column}
+
+\end{columns}
+
+\begin{tikzpicture}[remember picture, overlay]
+\draw[color=magenta, thick, ->] (2.775,0.55) to[bend right=90] node[above, yshift=2mm](){tail call / no tail call}(8,0.6);
+\draw [thick, color=magenta, decorate,decoration={brace,amplitude=3pt}](3.5,0.65) -- (2.05,0.65);
+\end{tikzpicture}
+
+\end{frame}
+
+\begin{frame}{How does tail call work?}
+
+\centerline{First, how does regular call work?}
+
+\begin{center}
+\begin{tikzpicture}[remember picture]
+\node (foo) at (1,0) [draw, fill=blue!20, thick, minimum width=1cm, minimum height=1cm, rounded corners=.2cm]{foo};
+\pause
+\node (bar) at (4,0) [draw, fill=blue!20, thick, minimum width=1cm, minimum height=1cm, rounded corners=.2cm]{bar};
+\draw[color=blue!60, thick, ->] (foo) to[bend left=30] node[above](){co\_await}(bar);
+
+\pause
+\node (bar2) at (7,0) [draw, fill=blue!20, thick, minimum width=1cm, minimum height=1cm, rounded corners=.2cm]{bar2};
+\draw[color=blue!60, thick, ->] (bar) to[bend left=30] node[above](){co\_await}(bar2);
+
+\pause
+\node (foo2) at (10,0) [draw, fill=blue!20, thick, minimum width=1cm, minimum height=1cm, rounded corners=.2cm]{foo2};
+\draw[color=blue!60, thick, ->] (bar2) to[bend left=30] node[above](){co\_await}(foo2);
+
+\pause
+
+\draw[color=blue!60, thick, ->] (foo2) to[bend left=30] node[above](){co\_return}(bar2);
+\draw[color=red, thick, ->] (bar2.-50) to[bend right=30] node[below](){destroy}(foo2.-130);
+\node (foo2) at (10,0) [draw, fill=red!50, thick, minimum width=1cm, minimum height=1cm, rounded corners=.2cm]{foo2};
+
+\pause
+
+\draw[color=blue!60, thick, ->] (bar2) to[bend left=30] node[above](){co\_return}(bar);
+\draw[color=red, thick, ->] (bar.-50) to[bend right=30] node[below](){destroy}(bar2.-130);
+\node (bar2) at (7,0) [draw, fill=red!50, thick, minimum width=1cm, minimum height=1cm, rounded corners=.2cm]{bar2};
+
+\pause
+
+\draw[color=blue!60, thick, ->] (bar) to[bend left=30] node[above](){co\_return}(foo);
+\draw[color=red, thick, ->] (foo.-50) to[bend right=30] node[below](){destroy}(bar.-130);
+\node (bar2) at (4,0) [draw, fill=red!50, thick, minimum width=1cm, minimum height=1cm, rounded corners=.2cm]{bar};
+
+\end{tikzpicture}
+
+\vfill
+
+\uncover<7>{\centerline{\alert{Conclusion:}}
+\begin{itemize}
+	\item At peak \alert{4 coroutine frames} had to be allocated
+	\item Only after returning to the calling coroutine, called one can be destroyed
+\end{itemize}}
+
+\end{center}
+\end{frame}
+
+\begin{frame}{How does tail-call work?}
+
+\centerline{In case of tail-call we first destroy the coroutine and then call another one.}
+
+\begin{tikzpicture}
+\node (foo) at (1,0) [draw, fill=blue!20, thick, minimum width=1cm, minimum height=1cm, rounded corners=.2cm]{foo};
+\pause
+\node (bar) at (4,0) [draw, fill=blue!20, thick, minimum width=1cm, minimum height=1cm, rounded corners=.2cm]{bar};
+\alt<1-3>{\draw[color=blue!60, thick, ->] (foo) to[bend left=30] node[above](){create}(bar);}{\draw[color=blue!60, thick, ->] (foo) to[bend left=30] node[above, text=violet](){co\_await}(bar);}
+
+\pause
+\node (foo) at (1,0) [draw, fill=red!60, thick, minimum width=1cm, minimum height=1cm, rounded corners=.2cm]{foo};
+\draw[color=red!60, thick, ->] (foo.-35) to[out=15, in=-100, loop, looseness=10] node[below](){destroy}(foo.-55);
+\pause
+\pause
+
+\node (bar2) at (7,0) [draw, fill=blue!20, thick, minimum width=1cm, minimum height=1cm, rounded corners=.2cm]{bar2};
+\alt<5-6>{\draw[color=blue!60, thick, ->] (bar) to[bend left=30] node[above](){create}(bar2);}{\draw[color=blue!60, thick, ->] (bar) to[bend left=30] node[above, text=violet](){co\_await}(bar2);}
+
+\pause
+\node (bar) at (4,0) [draw, fill=red!60, thick, minimum width=1cm, minimum height=1cm, rounded corners=.2cm]{bar};
+\draw[color=red!60, thick, ->] (bar.-35) to[out=15, in=-100, loop, looseness=10] node[below](){destroy}(bar.-55);
+\pause
+\pause
+
+\node (foo2) at (10,0) [draw, fill=blue!20, thick, minimum width=1cm, minimum height=1cm, rounded corners=.2cm]{foo2};
+\alt<8-9>{\draw[color=blue!60, thick, ->] (bar2) to[bend left=30] node[above](){create}(foo2);}{\draw[color=blue!60, thick, ->] (bar2) to[bend left=30] node[above, text=violet](){co\_await}(foo2);}
+\pause
+\node (bar2) at (7,0) [draw, fill=red!60, thick, minimum width=1cm, minimum height=1cm, rounded corners=.2cm]{bar2};
+\draw[color=red!60, thick, ->] (bar2.-35) to[out=15, in=-100, loop, looseness=10] node[below](){destroy}(bar2.-55);
+\pause
+\pause
+
+\draw[thick, color=green!60!black, ->] (foo2.south) to[out=-90, in=0] node[above left, xshift=-1cm, yshift=1.5mm](){return}(3,-2);
+\end{tikzpicture}
 
 \end{frame}
 
