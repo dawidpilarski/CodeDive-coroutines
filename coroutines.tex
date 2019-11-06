@@ -27,6 +27,7 @@
 \definecolor{amethystdark}{rgb}{0.4, 0.3, 0.9}
 \definecolor{orangedark}{rgb}{0.0, 0.9, 0}
 \definecolor{titlebg}{HTML}{fbf8ff}
+\definecolor{background}{HTML}{fafafa}
 \definecolor{font}{HTML}{23373b}
 \setbeamercolor{frametitle}{fg= font, bg=titlebg}
 \setbeamercolor{progress bar}{ fg = amethyst, bg= amethystgrey }
@@ -171,6 +172,7 @@
   \begin{itemize}[<+->]
   	\item Whether the function is a coroutine depends on \alert{it's definition}.
   	\item If function is a coroutine it's \alert{return type must support coroutines}.
+  	\item Compiler knows the function is a coroutine by presence of keywords {\alert{\texttt{co\_await}}, \alert{\texttt{co\_return}}, \alert{\texttt{co\_yield}}}
   \end{itemize}
   
 \end{frame}
@@ -245,7 +247,7 @@
 	\begin{itemize}[<+-|alert@+>]
 		\item have \texttt{awaiter operator co\_await} defined, or
 		\item have global \texttt{awaiter operator co\_await(A)} support, or
-		\item implement 3 functions:
+		\item implement 3 functions (be awaiter itself):
 		\begin{itemize}
 			\item \texttt{bool await\_ready()}
 			\item \texttt{await\_suspend(coroutine\_handle<P>)} returning
@@ -256,27 +258,19 @@
 			\end{itemize}
 			\item \texttt{T await\_resume()}
 		\end{itemize}
+		\item promise\_type.await\_transform(A) must produce object which type has above properties
 	\end{itemize}
 \end{frame}
 
 \section{Missing coroutines parts}
 
-\begin{frame}{Type erasure}
-	
-
-\end{frame}
-
 \begin{frame}{asynchronous RAII}
 
 \centerline{\alert{RAII} - Resource Acquisition Is Initialization.}
 
-what does it mean in practice?
-
-Release the resources in the destructor.
-
 \end{frame}
 
-\begin{frame}[fragile]{RAII vs. coroutines}
+\begin{frame}{RAII vs. coroutines}
 \centerline{How do coroutines differ?}
 
 
@@ -291,9 +285,6 @@ Release the resources in the destructor.
 
 \only{\centerline{\alert{No RAII to close the file!}}}<7->
 \only{\small Possible leak when async\_read throws}<8>
-\only{\small \\Add solution}<8>
-
-
 \end{frame}
 
 \begin{frame}{It's not only about proper error handling}
@@ -317,7 +308,6 @@ Release the resources in the destructor.
 
 \vfill
 
-issues:
 \begin{itemize}[<+-| alert@+>]
 	\item at the \texttt{break;} we are destroying coroutine
 	\item not all lines from file might be consumed
@@ -345,38 +335,43 @@ issues:
 \end{frame}
 
 \begin{frame}{asynchronous generators}
+\only{\inputminted[highlightlines={2}]{\coroCpp}{code-examples/async-raii/async_generator.cpp}}<1>
+\only{\inputminted[highlightlines={3-5}]{\coroCpp}{code-examples/async-raii/async_generator.cpp}}<2>
+\only{\inputminted[highlightlines={6}]{\coroCpp}{code-examples/async-raii/async_generator.cpp}}<3>
+\only{\inputminted[highlightlines={9}]{\coroCpp}{code-examples/async-raii/async_generator.cpp}}<4>
+\end{frame}
+
+\begin{frame}{asynchronous generators}
 
 \inputminted{\coroCpp}{code-examples/async-raii/async_generator.cpp}
 
 \begin{tikzpicture}[remember picture, overlay]
-\node[color=violet] at (4,0.5) (cleanup){cleanup};
-\draw[color=violet, thick, <-] (3, 0.9) to[out=-90, in=180] (cleanup);
+\node[color=violet] at (4,0.7) (cleanup){cleanup};
+\draw[color=violet, thick, <-] (3, 1.1) to[out=-90, in=180] (cleanup);
 \pause
 % \draw[color=magenta, thick, ->]   (6.5, 3.25) to[out=105 in=105] (9.5, 2.7) to[out=-75, in=0] node[below right](){on loop finished} (7, 1.35);
-\draw[color=magenta] node at(10, 1.65) (){on loop finished} ;
-\draw[color=magenta, thick, ->] plot [smooth, tension=2] coordinates { (6.5, 3.25) (9.7, 2.7) (7, 1.35) };
+\draw[color=magenta] node at(8, 1) (){on loop finished} ;
+\draw[color=magenta, thick, ->] plot [smooth, tension=1] coordinates { (9, 3) (9, 1.7) (7, 1.35) };
 \pause
 \node[color=blue] at (4.5, 2.2)(nocleanup){on early destroy - \color{red}\textit{no cleanup}};
 \draw[color=blue, thick, ->] (1.5, 2.5) to[bend right=20] (nocleanup.west);
-
 \end{tikzpicture}
 
 \end{frame}
 
 \begin{frame}{Current solution to the problem}
-\only{\inputminted[highlightlines={4,5,7-9,12}]{\coroCpp}{code-examples/async-raii/manual_noraii.cpp}}<1>
-\only{\inputminted[highlightlines={5}]{\coroCpp}{code-examples/async-raii/manual_noraii.cpp}}<2>
-\only{\inputminted[highlightlines={7-9}]{\coroCpp}{code-examples/async-raii/manual_noraii.cpp}}<3>
-\only{\inputminted[highlightlines={4}]{\coroCpp}{code-examples/async-raii/manual_noraii.cpp}}<4>
-\only{\inputminted[highlightlines={12}]{\coroCpp}{code-examples/async-raii/manual_noraii.cpp}}<5>
+\only{\inputminted[highlightlines={6-8}]{\coroCpp}{code-examples/async-raii/manual_noraii.cpp}}<1>
+\only{\inputminted[highlightlines={6}]{\coroCpp}{code-examples/async-raii/manual_noraii.cpp}}<2>
+\only{\inputminted[highlightlines={7}]{\coroCpp}{code-examples/async-raii/manual_noraii.cpp}}<3>
+\only{\inputminted[highlightlines={8}]{\coroCpp}{code-examples/async-raii/manual_noraii.cpp}}<4>
+\only{\inputminted[highlightlines={11}]{\coroCpp}{code-examples/async-raii/manual_noraii.cpp}}<5>
 \end{frame}
 
 \begin{frame}{Proposed coroutines improvement}
-\begin{itemize}
-	\item make co\_await create it's own scope.
+\begin{itemize}[<+->]
 	\item create special function in the awaiter : \alert{\texttt{\codeTilda operator co\_await}}
 	\item \alert{\texttt{\codeTilda operator co\_await}} gets co-awaited at the end of the scope
-	\item instead of \texttt{\alert{destroy()}} you will invoke \texttt{\alert{set\_done()}}
+	\item instead of \texttt{\alert{destroy()}} you will invoke \texttt{\alert{set\_done()}}$_{why}$
 \end{itemize}
 \end{frame}
 
@@ -410,7 +405,9 @@ Allows to avoid unnecessary copy or move construction of the values returned fro
 \pause
 For example:
 
-\inputminted[frame=single]{c++}{code-examples/RVO_examples/example.cpp}
+\vfill
+
+\inputminted{c++}{code-examples/RVO_examples/example.cpp}
 
 \end{frame}
 
@@ -472,7 +469,7 @@ For example:
 
 \begin{enumerate}[<+-| alert@+>]
 	\item Remove \alert{await\_resume} function.
-	\item \alert{await\_suspend} will will create return result
+	\item \alert{await\_suspend} will create return result
 	\item Remove \alert{await\_ready} function.
 \end{enumerate}
 \end{column}
@@ -665,7 +662,7 @@ right now it's not possible to implement both in the same scope.
 
 \end{frame}
 
-\begin{frame}{How does tail call work?}
+\begin{frame}{How does regular/tail call work?}
 
 \centerline{First, how does regular call work?}
 
@@ -753,6 +750,33 @@ right now it's not possible to implement both in the same scope.
 
 \end{frame}
 
+\begin{frame}{Tail call is implementable.}
+
+\centerline{Tail call is implementable.}
+
+\alert{But only for non-void returning types.}
+
+\end{frame}
+
+\begin{frame}{Why it's not implementable for void types.}
+
+\inputminted{\coroCpp}{code-examples/retval-retvoid/void-example.cpp}
+
+
+\only{\begin{tikzpicture}[remember picture, overlay]
+\draw[color=background, fill=background] (0, 1.2) rectangle (7,3);
+\end{tikzpicture}}<1>
+
+\pause
+\pause
+
+\begin{tikzpicture}[remember picture, overlay]
+\draw [thick, color=magenta, decorate,decoration={brace,amplitude=3pt}] (7,3.5) -- (7,1.2);
+\node[text centered, text width=25mm, text=magenta] at (8.2, 2.35){Both cannot apear in the same scope!};
+\end{tikzpicture}
+
+\end{frame}
+
 \section*{Thank you for your attention!}
 
 \begin{frame}{Special thank you! goes to:}
@@ -763,6 +787,8 @@ right now it's not possible to implement both in the same scope.
 
 	for making coroutines 
 \end{frame}
+
+\section{Summary}
 
 \begin{frame}{Bibliography and further reading}
 \begin{columns}
