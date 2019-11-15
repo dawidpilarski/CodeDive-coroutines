@@ -1,8 +1,10 @@
 async_generator<std::string> lines(const path& file_path) {
   auto opened_file = co_await async_open(file_path);
-  while(getline(stream, line)){
-    co_yield co_await async_read_line(opened_file);
+  std::optional<std::string> opt_line;
+  while(opt_line = co_await 
+                   async_read_line(opened_file)){
+    co_yield *opt_line;
   }
   
-  //async close happens as a part of cleanup
+  // async_close happens as a part of clean-up
 }

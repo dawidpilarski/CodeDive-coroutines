@@ -62,7 +62,7 @@
 
 \maketitle
 
-\section{Introduction}
+\section*{Introduction}
 \begin{frame}{Agenda}
 	\tableofcontents
 \end{frame}
@@ -76,23 +76,23 @@
 
 \end{frame}
 
-\begin{frame}{Who am I?}
-			\centering \alert{Dawid Pilarski}
-			\vskip 1em
-	\begin{columns}[onlytextwidth]
-		\begin{column}{0.7\textwidth}
-			\begin{itemize}
-				\item Senior Software Developer in TomTom
-				\item Member of the ISO/JTC1/SC22/WG21
-				\item Member of the PKN KT {\tiny(programming languages)}
-				\item C++ blog writer
-			\end{itemize}
-		\end{column}
-		\begin{column}{0.29\textwidth}
-				\includegraphics[width=\linewidth]{Dawid_Pilarski.jpg}				
-		\end{column}	
-	\end{columns}
-\end{frame}
+% \begin{frame}{Who am I?}
+% 			\centering \alert{Dawid Pilarski}
+% 			\vskip 1em
+% 	\begin{columns}[onlytextwidth]
+% 		\begin{column}{0.7\textwidth}
+% 			\begin{itemize}
+% 				\item Senior Software Developer in TomTom
+% 				\item Member of the ISO/JTC1/SC22/WG21
+% 				\item Member of the PKN KT {\tiny(programming languages)}
+% 				\item C++ blog writer
+% 			\end{itemize}
+% 		\end{column}
+% 		\begin{column}{0.29\textwidth}
+% 				\includegraphics[width=\linewidth]{Dawid_Pilarski.jpg}				
+% 		\end{column}	
+% 	\end{columns}
+% \end{frame}
 
 \section{Quick refresh about the coroutines.}
 
@@ -100,7 +100,7 @@
 \vfill
 
 \begin{description}
-	\item [Subroutine] Is a sequence of program instructions that performs a specific task, packaged as a unit.
+	\item [Subroutine] Is a sequence of program instructions that perform a specific task, packaged as a unit.
 	\item [Function] Is a subroutine
 	\item [Coroutine] Is generalization of the function.
 \end{description}
@@ -114,7 +114,7 @@
 		\item called
 		\item returned from
 		\item<2-|alert@2> \alert<+>{suspended}
-		\item<3-|alert@3> resumed from
+		\item<3-|alert@3> resumed
 		\item<4-|alert@4> created
 		\item<5-|alert@5> destroyed
 	\end{itemize}
@@ -157,7 +157,7 @@
 
 	\vfill
 
-	\only{You need to remember to implement on average \alert{9 functions}.}<5>
+	\only{You need to remember to implement on minimum \alert{9 functions}.}<5>
 \end{frame}
 
 \begin{frame}{Coroutine declaration}
@@ -171,8 +171,8 @@
 
   \begin{itemize}[<+->]
   	\item Whether the function is a coroutine depends on \alert{it's definition}.
-  	\item If function is a coroutine it's \alert{return type must support coroutines}.
   	\item Compiler knows the function is a coroutine by presence of keywords {\alert{\texttt{co\_await}}, \alert{\texttt{co\_return}}, \alert{\texttt{co\_yield}}}
+  	\item If function is a coroutine it's \alert{return type must support coroutines}.
   \end{itemize}
   
 \end{frame}
@@ -182,7 +182,7 @@
 	\vfill
 
 	promise\_type can be:
-	\begin{itemize}
+	\begin{itemize}[<+-|alert@+>]
 		\item member of the class
 		\item member of the specialization of the coroutine\_traits<returned\_type>
 	\end{itemize}
@@ -243,8 +243,9 @@
 \end{frame}
 
 \begin{frame}{co\_await}
-	In order to support \alert{co\_await} expressions, the argument (awaitable) must:
+	In order to support \alert{co\_await} expressions, the argument (awaitable):
 	\begin{itemize}[<+-|alert@+>]
+	    \item promise\_type.await\_transform(A) (if exists) must produce object which type has below properties:
 		\item have \texttt{awaiter operator co\_await} defined, or
 		\item have global \texttt{awaiter operator co\_await(A)} support, or
 		\item implement 3 functions (be awaiter itself):
@@ -258,13 +259,34 @@
 			\end{itemize}
 			\item \texttt{T await\_resume()}
 		\end{itemize}
-		\item promise\_type.await\_transform(A) must produce object which type has above properties
 	\end{itemize}
 \end{frame}
 
-\section{Missing coroutines parts}
+\begin{frame}{Resuming coroutine with coroutine\_handle}
 
-\begin{frame}{asynchronous RAII}
+  \only{\inputminted[highlightlines={1}]{\coroCpp}{code-examples/theory-custom-coroutine/coroutine_handle.h}}<1>
+  \only{\inputminted[highlightlines={2,3}]{\coroCpp}{code-examples/theory-custom-coroutine/coroutine_handle.h}}<2>
+  \only{\inputminted[highlightlines={4}]{\coroCpp}{code-examples/theory-custom-coroutine/coroutine_handle.h}}<3>
+  \only{\inputminted[highlightlines={6,7}]{\coroCpp}{code-examples/theory-custom-coroutine/coroutine_handle.h}}<4>
+  \only{\inputminted[highlightlines={9}]{\coroCpp}{code-examples/theory-custom-coroutine/coroutine_handle.h}}<5>
+  \only{\inputminted[highlightlines={10}]{\coroCpp}{code-examples/theory-custom-coroutine/coroutine_handle.h}}<6>
+  \only{\inputminted[highlightlines={12}]{\coroCpp}{code-examples/theory-custom-coroutine/coroutine_handle.h}}<7>
+  \only{\inputminted[highlightlines={14}]{\coroCpp}{code-examples/theory-custom-coroutine/coroutine_handle.h}}<8>
+\end{frame}
+
+\begin{frame}{And how do I get the coroutine\_handle object?}
+  \centerline{\texttt{\alert{coroutine\_handles}} are specialized for \texttt{\alert{promise\_type}}}
+
+  \only{\inputminted[highlightlines={1}]{c++}{code-examples/theory-custom-coroutine/coroutine_handle_promise.h}}<1>
+  \only{\inputminted[highlightlines={2}]{c++}{code-examples/theory-custom-coroutine/coroutine_handle_promise.h}}<2>
+  \only{\inputminted[highlightlines={4}]{c++}{code-examples/theory-custom-coroutine/coroutine_handle_promise.h}}<3>
+  \only{\inputminted[highlightlines={5, 10}]{c++}{code-examples/theory-custom-coroutine/coroutine_handle_promise.h}}<4>
+  \only{\inputminted[highlightlines={6, 8}]{c++}{code-examples/theory-custom-coroutine/coroutine_handle_promise.h}}<5>
+\end{frame}
+
+\section{Asynchronous RAII}
+
+\begin{frame}{Asynchronous RAII}
 
 \centerline{\alert{RAII} - Resource Acquisition Is Initialization.}
 
@@ -376,8 +398,8 @@
 \end{frame}
 
 \begin{frame}{Example}
-\only{\inputminted[highlightlines={2,4}]{\coroCpp}{code-examples/async-raii/better-async-gen.cpp}}<1>
-\only{\inputminted[highlightlines={7}]{\coroCpp}{code-examples/async-raii/better-async-gen.cpp}}<2>
+\only{\inputminted[highlightlines={2,4-6}]{\coroCpp}{code-examples/async-raii/better-async-gen.cpp}}<1>
+\only{\inputminted[highlightlines={9}]{\coroCpp}{code-examples/async-raii/better-async-gen.cpp}}<2>
 \end{frame}
 
 \begin{frame}{Summary}
@@ -447,16 +469,18 @@ For example:
 \begin{column}{0.55\linewidth}
 \centerline{transformed by compiler into:}
 \vfill
-\begin{onlyenv}<2->
-\inputminted[highlightlines={5,8}]{c++}{code-examples/RVO_examples/transformed_co_await.cpp}
+
+\only{\inputminted{\coroCpp}{code-examples/RVO_examples/transformed_co_await.cpp}}<1>
+\only{\inputminted[highlightlines={5}]{\coroCpp}{code-examples/RVO_examples/transformed_co_await.cpp}}<2>
+
+\begin{onlyenv}<3>
+\inputminted[highlightlines={5,8}]{\coroCpp}{code-examples/RVO_examples/transformed_co_await.cpp}
 \tikz[baseline,remember picture]{\node[anchor=base] at (6, 1.3) (t1){};
-\tikz[remember picture] \node[coordinate] at (6,2.5) (n1) {};
-}
+\tikz[remember picture] \node[coordinate] at (6,2.5) (n1) {};}
 \begin{tikzpicture}[remember picture,overlay] 
         \path[->]<1-> (n1) edge [draw=magenta, thick, bend left] (t1);
 \end{tikzpicture}
 \end{onlyenv}
-\only{\inputminted{c++}{code-examples/RVO_examples/transformed_co_await.cpp}}<1>
 \vfill
 \end{column}
 \end{columns}
@@ -493,7 +517,7 @@ For example:
 
 \begin{tikzpicture}[remember picture, overlay]
 \draw[draw=red] (0.25,3.15) -- (5.5,3.15);
-\draw[draw=red] (0.25,1.75) -- (5.5,1.75);
+\draw[draw=red] (0.25,1.25) -- (5.5,1.25);
 \draw [draw=blue!20, fill=blue!90, opacity=0.1] (0.7, 2.05) rectangle (5.2, 2.40);
 \end{tikzpicture}
 \end{onlyenv}
@@ -512,7 +536,7 @@ For example:
 
 	\begin{itemize}[<+-| alert@+>]
 		\item set\_value(T)
-		\item set\_value\_from(Arg...)
+		\item set\_value\_from(std::in\_place\_construct<Arg\&\&...>)
 		\item set\_exception(exception\_ptr)
 	\end{itemize}
 	
@@ -549,7 +573,7 @@ For example:
 \end{frame}
 
 \begin{frame}{How do compiler know the result of the co\_await?}
-	With removal of the \alert{await\_ready} the compiler no longer knows about the co\_await returned type.
+	With removal of the \alert{await\_resume} the compiler no longer knows about the co\_await returned type.
 	\vfill
 
 	We will need to guide the compiler. The proposal 
@@ -640,7 +664,11 @@ right now it's not possible to implement both in the same scope.
 
 \begin{frame}{Tail recursive coroutines}
 
-\centerline{\alert{What's the tail recursive coroutines?}}
+\centerline{\only{\alert}<1>{What are tail recursive coroutines?}}
+
+\pause
+
+\only{\centerline{\alert{Find a difference in the pictures}}}<3>
 
 \vfill
 
@@ -655,10 +683,12 @@ right now it's not possible to implement both in the same scope.
 
 \end{columns}
 
+\only{
 \begin{tikzpicture}[remember picture, overlay]
 \draw[color=magenta, thick, ->] (2.775,0.55) to[bend right=90] node[above, yshift=2mm](){tail call / no tail call}(8,0.6);
 \draw [thick, color=magenta, decorate,decoration={brace,amplitude=3pt}](3.5,0.65) -- (2.05,0.65);
 \end{tikzpicture}
+}<4>
 
 \end{frame}
 
@@ -706,21 +736,21 @@ right now it's not possible to implement both in the same scope.
 \uncover<7>{\centerline{\alert{Conclusion:}}
 \begin{itemize}
 	\item At peak \alert{4 coroutine frames} had to be allocated
-	\item Only after returning to the calling coroutine, called one can be destroyed
+	\item Only after returning to the caller coroutine, called one can be destroyed
 \end{itemize}}
 
 \end{center}
 \end{frame}
 
-\begin{frame}{How does tail-call work?}
+\begin{frame}{How does non tail-call work?}
 
-\centerline{In case of tail-call we first destroy the coroutine and then call another one.}
+\centerline{In case of non tail-call we first destroy the coroutine and then call another one.}
 
 \begin{tikzpicture}
 \node (foo) at (1,0) [draw, fill=blue!20, thick, minimum width=1cm, minimum height=1cm, rounded corners=.2cm]{foo};
 \pause
 \node (bar) at (4,0) [draw, fill=blue!20, thick, minimum width=1cm, minimum height=1cm, rounded corners=.2cm]{bar};
-\alt<1-3>{\draw[color=blue!60, thick, ->] (foo) to[bend left=30] node[above](){create}(bar);}{\draw[color=blue!60, thick, ->] (foo) to[bend left=30] node[above, text=violet](){co\_await}(bar);}
+\alt<1-3>{\draw[color=blue!60, thick, ->] (foo) to[bend left=30] node[above](){create}(bar);}{\draw[color=blue!60, thick, ->] (foo) to[bend left=30] node[above, text=violet](){resume}(bar);}
 
 \pause
 \node (foo) at (1,0) [draw, fill=red!60, thick, minimum width=1cm, minimum height=1cm, rounded corners=.2cm]{foo};
@@ -729,7 +759,7 @@ right now it's not possible to implement both in the same scope.
 \pause
 
 \node (bar2) at (7,0) [draw, fill=blue!20, thick, minimum width=1cm, minimum height=1cm, rounded corners=.2cm]{bar2};
-\alt<5-6>{\draw[color=blue!60, thick, ->] (bar) to[bend left=30] node[above](){create}(bar2);}{\draw[color=blue!60, thick, ->] (bar) to[bend left=30] node[above, text=violet](){co\_await}(bar2);}
+\alt<5-6>{\draw[color=blue!60, thick, ->] (bar) to[bend left=30] node[above](){create}(bar2);}{\draw[color=blue!60, thick, ->] (bar) to[bend left=30] node[above, text=violet](){resume}(bar2);}
 
 \pause
 \node (bar) at (4,0) [draw, fill=red!60, thick, minimum width=1cm, minimum height=1cm, rounded corners=.2cm]{bar};
@@ -738,7 +768,7 @@ right now it's not possible to implement both in the same scope.
 \pause
 
 \node (foo2) at (10,0) [draw, fill=blue!20, thick, minimum width=1cm, minimum height=1cm, rounded corners=.2cm]{foo2};
-\alt<8-9>{\draw[color=blue!60, thick, ->] (bar2) to[bend left=30] node[above](){create}(foo2);}{\draw[color=blue!60, thick, ->] (bar2) to[bend left=30] node[above, text=violet](){co\_await}(foo2);}
+\alt<8-9>{\draw[color=blue!60, thick, ->] (bar2) to[bend left=30] node[above](){create}(foo2);}{\draw[color=blue!60, thick, ->] (bar2) to[bend left=30] node[above, text=violet](){resume}(foo2);}
 \pause
 \node (bar2) at (7,0) [draw, fill=red!60, thick, minimum width=1cm, minimum height=1cm, rounded corners=.2cm]{bar2};
 \draw[color=red!60, thick, ->] (bar2.-35) to[out=15, in=-100, loop, looseness=10] node[below](){destroy}(bar2.-55);
@@ -747,6 +777,10 @@ right now it's not possible to implement both in the same scope.
 
 \draw[thick, color=green!60!black, ->] (foo2.south) to[out=-90, in=0] node[above left, xshift=-1cm, yshift=1.5mm](){return}(3,-2);
 \end{tikzpicture}
+
+
+\centerline{\alert{At most 2 frames were allocated.}}
+
 
 \end{frame}
 
@@ -777,6 +811,18 @@ right now it's not possible to implement both in the same scope.
 
 \end{frame}
 
+\begin{frame}{Summary}
+
+After accepting this change we will able to:
+
+\begin{itemize}[<+-|alert@+>]
+\item simplify implementations of \texttt{promise\_types} for some cases.
+\item make it possible for some type to \alert{support non tail coroutines calls}
+\end{itemize}
+
+
+\end{frame}
+
 \section*{Thank you for your attention!}
 
 \begin{frame}{Special thank you! goes to:}
@@ -788,7 +834,7 @@ right now it's not possible to implement both in the same scope.
 	for making coroutines 
 \end{frame}
 
-\section{Summary}
+\section*{Summary}
 
 \begin{frame}{Bibliography and further reading}
 \begin{columns}

@@ -1,7 +1,8 @@
 template <typename T>
 struct task<T>::promise_type{
   //...
-  void return_value(){
+  template <typename T>
+  void return_value(T&&){
     //...
   }
 };

@@ -1,4 +1,4 @@
-task<std::vector<char>> 
+task<std::vector<std::byte>> 
 read_file(const path& file_path){
 
   auto opened_file = co_await async_open(path);
