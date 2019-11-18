@@ -10,6 +10,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{tikz}
+\usepackage{pstricks}
 \usetikzlibrary{arrows,shapes}
 \usetikzlibrary{decorations.text}
 \usetikzlibrary{decorations.pathreplacing}
@@ -76,23 +77,23 @@
 
 \end{frame}
 
-% \begin{frame}{Who am I?}
-% 			\centering \alert{Dawid Pilarski}
-% 			\vskip 1em
-% 	\begin{columns}[onlytextwidth]
-% 		\begin{column}{0.7\textwidth}
-% 			\begin{itemize}
-% 				\item Senior Software Developer in TomTom
-% 				\item Member of the ISO/JTC1/SC22/WG21
-% 				\item Member of the PKN KT {\tiny(programming languages)}
-% 				\item C++ blog writer
-% 			\end{itemize}
-% 		\end{column}
-% 		\begin{column}{0.29\textwidth}
-% 				\includegraphics[width=\linewidth]{Dawid_Pilarski.jpg}				
-% 		\end{column}	
-% 	\end{columns}
-% \end{frame}
+\begin{frame}{Who am I?}
+			\centering \alert{Dawid Pilarski}
+			\vskip 1em
+	\begin{columns}[onlytextwidth]
+		\begin{column}{0.7\textwidth}
+			\begin{itemize}
+				\item Senior Software Developer in TomTom
+				\item Member of the ISO/JTC1/SC22/WG21
+				\item Member of the PKN KT {\tiny(programming languages)}
+				\item C++ blog writer
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.29\textwidth}
+				\includegraphics[width=\linewidth]{Dawid_Pilarski.jpg}				
+		\end{column}	
+	\end{columns}
+\end{frame}
 
 \section{Quick refresh about the coroutines.}
 
@@ -284,6 +285,14 @@
   \only{\inputminted[highlightlines={6, 8}]{c++}{code-examples/theory-custom-coroutine/coroutine_handle_promise.h}}<5>
 \end{frame}
 
+\begin{frame}{Why is that useful?}
+\centerline{We can:}
+\begin{itemize}
+	\item hide asynchronous code
+	\item delegate state management to the compiler 
+\end{itemize}
+\end{frame}
+
 \section{Asynchronous RAII}
 
 \begin{frame}{Asynchronous RAII}
@@ -393,7 +402,7 @@
 \begin{itemize}[<+->]
 	\item create special function in the awaiter : \alert{\texttt{\codeTilda operator co\_await}}
 	\item \alert{\texttt{\codeTilda operator co\_await}} gets co-awaited at the end of the scope
-	\item instead of \texttt{\alert{destroy()}} you will invoke \texttt{\alert{set\_done()}}$_{why}$
+	\item instead of \texttt{\alert{destroy()}} you will invoke \texttt{\alert{set\_done()}}
 \end{itemize}
 \end{frame}
 
@@ -792,7 +801,20 @@ right now it's not possible to implement both in the same scope.
 
 \end{frame}
 
-\begin{frame}{Why it's not implementable for void types.}
+\begin{frame}{Why it's not implementable for task<void> types.}
+	
+	\inputminted{\coroCpp}{code-examples/retval-retvoid/void_task_notail.cpp}
+
+	\pause
+	\begin{tikzpicture}[remember picture, overlay]
+	\draw[thick, <-, color=blue] (4.5,3.825) -- node[right, xshift=2mm](){p.return\_void();} (5,3.825);
+	\pause
+	\draw[thick, ->, color=magenta] (3,1) to[bend right=30] node[right, xshift=6mm, yshift=-1.55mm](){p.return\_value(display\_text(content))} (4,0.45);
+	\end{tikzpicture}
+
+\end{frame}
+
+\begin{frame}{Why it's not implementable for task<void> types.}
 
 \inputminted{\coroCpp}{code-examples/retval-retvoid/void-example.cpp}
 
@@ -831,7 +853,7 @@ After accepting this change we will able to:
 		\item Lewiss Baker	
 	\end{itemize}
 
-	for making coroutines 
+	for creating C++ coroutines 
 \end{frame}
 
 \section*{Summary}
@@ -860,6 +882,14 @@ After accepting this change we will able to:
 \vfill
 \centering Questions?
 \vfill
+
+\small
+\begin{description}
+	\item [blog] blog.panicsoftware.com
+	\item [private mail] dawid.pilarski@panicsoftware.com
+	\item [corporate mail] dawid.pilarski@tomtom.com
+	\item [this] https://github.com/dawidpilarski/CodeDive-coroutines
+\end{description}
 \end{frame}
 
 \end{document}
