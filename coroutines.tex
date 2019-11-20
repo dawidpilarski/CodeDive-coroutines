@@ -64,18 +64,7 @@
 \maketitle
 
 \section*{Introduction}
-\begin{frame}{Agenda}
-	\tableofcontents
-\end{frame}
 
-\begin{frame}{Questions...}
-
-\vfill
-\centerline{Time is rather tight.}
-\centerline{Please hold your questions till the end.}
-\vfill
-
-\end{frame}
 
 \begin{frame}{Who am I?}
 			\centering \alert{Dawid Pilarski}
@@ -93,6 +82,18 @@
 				\includegraphics[width=\linewidth]{Dawid_Pilarski.jpg}				
 		\end{column}	
 	\end{columns}
+\end{frame}
+
+\begin{frame}{Agenda}
+	\tableofcontents
+\end{frame}
+
+\begin{frame}{Questions...}
+
+\vfill
+\centerline{Please hold your questions till the end.}
+\vfill
+
 \end{frame}
 
 \section{Quick refresh about the coroutines.}
@@ -289,11 +290,11 @@
 \centerline{We can:}
 \begin{itemize}
 	\item hide asynchronous code
-	\item delegate state management to the compiler 
+	\item hide state management 
 \end{itemize}
 \end{frame}
 
-\section{Asynchronous RAII}
+\section{Asynchronous RAII \\ P1662R0}
 
 \begin{frame}{Asynchronous RAII}
 
@@ -420,12 +421,12 @@
 		\item coroutine type, because we cannot simply destroy the coroutine
 	\end{itemize}
 	\item In the space of asynchronous operations we have got no RAII idiom
-	\item With adoption of the proposal it will get better
+	\item With adoption of the proposal above is solved
 \end{itemize}
 
 \end{frame}
 
-\section{RVO for the co\_await}
+\section{RVO for the co\_await \\ P1663R0}
 
 \begin{frame}{What is RVO?}
 \centerline{\alert{RVO} - Return Value Optimization.}
@@ -495,7 +496,7 @@ For example:
 \end{columns}
 \end{frame}
 
-\begin{frame}{How to resolve the issue [P1663R0]}
+\begin{frame}{How to resolve the issue}
 
 \begin{columns}[T]
 \begin{column}{0.3\linewidth}
@@ -517,7 +518,6 @@ For example:
 
 \begin{onlyenv}<2>
 \begin{tikzpicture}[remember picture, overlay]
-\draw [draw=blue!20, fill=blue!90, opacity=0.1] (0.7, 3.0) rectangle (5.2, 3.35);
 \end{tikzpicture}
 \end{onlyenv}
 
@@ -527,7 +527,7 @@ For example:
 \begin{tikzpicture}[remember picture, overlay]
 \draw[draw=red] (0.25,3.15) -- (5.5,3.15);
 \draw[draw=red] (0.25,1.25) -- (5.5,1.25);
-\draw [draw=blue!20, fill=blue!90, opacity=0.1] (0.7, 2.05) rectangle (5.2, 2.40);
+% \draw [draw=blue!20, fill=blue!20] (0.7, 2.05) rectangle (5.2, 2.40);
 \end{tikzpicture}
 \end{onlyenv}
 
@@ -598,11 +598,7 @@ For example:
 \centerline{pros}
 \begin{itemize}[<+-| alert@+>]
 	\item very simplified awaiter concept
-	\item savings in CPU cycles
-	\begin{itemize}
-		\item Avoiding unnecessary move construction
-	\end{itemize}
-	\item savings in memory
+	\item RVO optimizations
 	\begin{itemize}
 		\item no temporary variable created
 		\item allocated coroutine state is smaller
@@ -614,14 +610,13 @@ For example:
 \begin{itemize}[<+-| alert@+>]
 	\item removing \alert{await\_ready} makes \alert{co\_await} always suspend the coroutine (even if not needed)
 	\item a need to support RVO manually (with the help of \alert{construct\_in\_place})
-	\item proposed RVO does not consider synchronous coroutines - only \alert{co\_await} keyword.
 \end{itemize}
 \end{column}
 \end{columns}
 
 \end{frame}
 
-\section{return\_value or/and return\_void}
+\section{non tail call optimization \\ P1713R0}
 
 \begin{frame}{return value [and|or] return void}
 
@@ -630,7 +625,7 @@ For example:
 right now it's not possible to implement both in the same scope.
 
 \begin{itemize}
-	\item \texttt{return\_value()}
+	\item \texttt{return\_value(T)}
 	\item \texttt{return\_void()}
 \end{itemize}
 
@@ -671,9 +666,9 @@ right now it's not possible to implement both in the same scope.
 
 \end{frame}
 
-\begin{frame}{Tail recursive coroutines}
+\begin{frame}{Tail coroutine call}
 
-\centerline{\only{\alert}<1>{What are tail recursive coroutines?}}
+\centerline{\only{\alert}<1>{What are tail coroutine calls?}}
 
 \pause
 
@@ -788,7 +783,7 @@ right now it's not possible to implement both in the same scope.
 \end{tikzpicture}
 
 
-\centerline{\alert{At most 2 frames were allocated.}}
+\only{\centerline{\alert{At most 2 frames were allocated.}}}<11>
 
 
 \end{frame}
@@ -797,17 +792,19 @@ right now it's not possible to implement both in the same scope.
 
 \centerline{Tail call is implementable.}
 
-\alert{But only for non-void returning types.}
+But only for non-void \alert{co\_}returning types.
 
 \end{frame}
 
 \begin{frame}{Why it's not implementable for task<void> types.}
 	
-	\inputminted{\coroCpp}{code-examples/retval-retvoid/void_task_notail.cpp}
+	\only{\inputminted[highlightlines={1-4}]{\coroCpp}{code-examples/retval-retvoid/void_task_notail.cpp}}<1,2>
+	\only{\inputminted[highlightlines={6-9}]{\coroCpp}{code-examples/retval-retvoid/void_task_notail.cpp}}<3->
 
 	\pause
 	\begin{tikzpicture}[remember picture, overlay]
-	\draw[thick, <-, color=blue] (4.5,3.825) -- node[right, xshift=2mm](){p.return\_void();} (5,3.825);
+	\draw[thick, <-, color=blue] (3,3.825) -- node[right, xshift=2mm](){p.return\_void();} (3.5,3.825);
+	\pause
 	\pause
 	\draw[thick, ->, color=magenta] (3,1) to[bend right=30] node[right, xshift=6mm, yshift=-1.55mm](){p.return\_value(display\_text(content))} (4,0.45);
 	\end{tikzpicture}
@@ -839,7 +836,7 @@ After accepting this change we will able to:
 
 \begin{itemize}[<+-|alert@+>]
 \item simplify implementations of \texttt{promise\_types} for some cases.
-\item make it possible for some type to \alert{support non tail coroutines calls}
+\item make it possible for some types to \alert{support non tail coroutines calls}
 \end{itemize}
 
 
@@ -850,7 +847,7 @@ After accepting this change we will able to:
 \begin{frame}{Special thank you! goes to:}
 	\begin{itemize}
 		\item Gor Nishanov
-		\item Lewiss Baker	
+		\item Lewis Baker	
 	\end{itemize}
 
 	for creating C++ coroutines 
@@ -862,9 +859,10 @@ After accepting this change we will able to:
 \begin{columns}
 \begin{column}{0.48\linewidth}
 	\begin{itemize}
-		\item Lewiss Baker's Assymetric transfer blog
+		\item Lewis Baker's Assymetric transfer blog
 		\item newest C++ draft
 		\item My blog - blog.panicsoftware.com
+		\item coroutines proposals
 	\end{itemize}
 \end{column}
 \begin{column}{0.48\linewidth}

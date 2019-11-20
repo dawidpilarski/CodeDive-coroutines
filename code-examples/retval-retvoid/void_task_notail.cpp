@@ -1,6 +1,6 @@
 task<void> display_text(string text){
   // ...
-  // implicit co_return;
+  co_return;
 }
 
 task<void> display_file(path file){
